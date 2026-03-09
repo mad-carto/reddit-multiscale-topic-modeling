@@ -1,6 +1,6 @@
 # Multiscale Topic Modeling of Reddit Discussions on US National Parks
 
-An end-to-end NLP pipeline for extracting and analyzing discussion topics from Reddit data across all US National Parks. The project applies a two-level topic modeling approach — identifying both broad themes shared across all parks and park-specific topics — while actively mitigating geographic and volumetric data bias.
+An end-to-end NLP pipeline for extracting and analyzing discussion topics from Reddit data across all US National Parks. The project applies a two-level topic modeling approach — identifying both broad themes shared across all parks and park-specific topics — while actively mitigating geographic and volumetric data bias. Document-level sentiment analysis is integrated into the pipeline to capture how visitors feel about each topic.
 
 ---
 
@@ -8,6 +8,7 @@ An end-to-end NLP pipeline for extracting and analyzing discussion topics from R
 
 - **NLP pipeline design** — building a modular, reproducible text processing pipeline from raw social media data to structured topic classifications
 - **Named Entity Recognition** — using GLiNER to detect and mask location mentions, preventing high-traffic parks from dominating topic representations
+- **Sentiment analysis** — applying a RoBERTa model fine-tuned on social media text to classify visitor sentiment per document
 - **Topic modeling at scale** — incremental BERTopic training across shuffled data batches to handle class imbalance across 60+ National Parks
 - **Analytical database integration** — replacing intermediate CSV files with DuckDB for efficient storage and querying of all pipeline stages
 - **Clean Python packaging** — refactored from notebooks into an installable `src`-layout package with a clear separation of concerns
@@ -22,8 +23,9 @@ data/raw/ (CSVs per park)
     ▼
 Preprocessing
   ├── Data cleaning (remove deleted/spam posts)
-  ├── NER with GLiNER → toponym masking
-  └── Text normalization (lemmatization, stopwords, regex)
+  ├── GLiNER NER → toponym masking
+  ├── Text normalization (lemmatization, stopwords, regex)
+  └── Sentiment analysis (per document) → label + confidence score
     │
     ▼
 Global Topic Model
@@ -38,8 +40,11 @@ Regional Topic Models
     │
     ▼
 Analysis & Visualization
-  └── Interactive HTML plots (topic maps, hierarchies, per-park distributions)
+  └── Interactive HTML plots (topic maps, hierarchies, per-park distributions,
+      sentiment distributions per topic and park)
 ```
+
+All intermediate data is stored in a local **DuckDB** database instead of intermediate CSVs.
 
 ---
 
@@ -49,28 +54,10 @@ Analysis & Visualization
 |---|---|
 | Topic Modeling | `bertopic`, `umap-learn`, `hdbscan` |
 | NLP / Embeddings | `sentence-transformers`, `gliner`, `nltk` |
-| Data & Storage | `duckdb`, `pandas`, `swifter` |
+| Sentiment Analysis | `transformers` (cardiffnlp/twitter-roberta-base-sentiment) |
+| Data & Storage | `duckdb`, `pandas` |
 | Visualization | `plotly` |
 | Environment | `uv`, `pyproject.toml` |
-
----
-
-## Project Structure
-
-```
-src/reddit_np_topics/
-├── db.py                     # DuckDB schema + read/write helpers
-├── preprocessing/
-│   ├── cleaner.py            # Raw data cleaning
-│   ├── ner.py                # GLiNER NER + toponym masking
-│   └── normalizer.py         # Text normalization
-├── modeling/
-│   ├── train_global.py       # Incremental global model training
-│   ├── train_regional.py     # Per-park model training
-│   └── utils.py              # Topic merging, coherence scoring
-└── visualization/
-    └── plots.py              # BERTopic visualization wrappers
-```
 
 ---
 
@@ -104,10 +91,13 @@ Grootendorst, M. (2022). BERTopic: Neural topic modeling with a class-based TF-I
 **GLiNER**
 Zaratiana, A., Tomeh, N., Holat, P., & Charnois, T. (2023). GLiNER: Generalist model for named entity recognition using bidirectional transformer. *arXiv preprint arXiv:2311.08526*. https://arxiv.org/abs/2311.08526
 
+**Sentiment Model**
+Barbieri, F., Camacho-Collados, J., Espinosa-Anke, L., & Neves, L. (2020). TweetEval: Unified Benchmark and Comparative Evaluation for Tweet Classification. *arXiv preprint arXiv:2010.12421*. https://arxiv.org/abs/2010.12421
+
 **Cite this project**
 ```
 @misc{reddit_np_topic_modeling,
-  author = {Your Name},
+  author = {Madalina Gugulica},
   title  = {Multiscale Topic Modeling of Reddit Discussions on US National Parks},
   year   = {2024},
   url    = {https://github.com/mad-carto/reddit-multiscale-topic-modeling}
