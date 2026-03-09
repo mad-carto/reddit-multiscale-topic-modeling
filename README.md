@@ -1,27 +1,83 @@
-# Reddit National Parks — Multiscale Topic Modeling
+# Multiscale Topic Modeling of Reddit Discussions on US National Parks
 
-Analyzing Reddit discussions about US National Parks using a two-level BERTopic pipeline. Topics are extracted at a **global** level (across all parks) and a **regional** level (per individual park).
+An end-to-end NLP pipeline for extracting and analyzing discussion topics from Reddit data across all US National Parks. The project applies a two-level topic modeling approach — identifying both broad themes shared across all parks and park-specific topics — while actively mitigating geographic and volumetric data bias.
 
-Location bias is mitigated by detecting place names with GLiNER and replacing them with a `TOPONYM` token before modeling. Incremental training across shuffled batches addresses data imbalance between parks.
+---
+
+## What this project demonstrates
+
+- **NLP pipeline design** — building a modular, reproducible text processing pipeline from raw social media data to structured topic classifications
+- **Named Entity Recognition** — using GLiNER to detect and mask location mentions, preventing high-traffic parks from dominating topic representations
+- **Topic modeling at scale** — incremental BERTopic training across shuffled data batches to handle class imbalance across 60+ National Parks
+- **Analytical database integration** — replacing intermediate CSV files with DuckDB for efficient storage and querying of all pipeline stages
+- **Clean Python packaging** — refactored from notebooks into an installable `src`-layout package with a clear separation of concerns
 
 ---
 
 ## Pipeline
 
 ```
-Raw CSVs → Cleaning → NER + Toponym Masking → Text Normalization
-       → Global BERTopic Model (incremental, 5 batches)
-       → Regional BERTopic Models (per park)
-       → Analysis & Visualization
+data/raw/ (CSVs per park)
+    │
+    ▼
+Preprocessing
+  ├── Data cleaning (remove deleted/spam posts)
+  ├── NER with GLiNER → toponym masking
+  └── Text normalization (lemmatization, stopwords, regex)
+    │
+    ▼
+Global Topic Model
+  ├── Dataset shuffled and split into 5 batches
+  ├── BERTopic trained per batch, models merged incrementally
+  └── Full corpus classified → global topics stored in DuckDB
+    │
+    ▼
+Regional Topic Models
+  ├── Per-park BERTopic model trained on globally-classified subset
+  └── Park-specific topics stored in DuckDB
+    │
+    ▼
+Analysis & Visualization
+  └── Interactive HTML plots (topic maps, hierarchies, per-park distributions)
 ```
 
-All intermediate data is stored in a local **DuckDB** database 
+---
+
+## Tech Stack
+
+| Area | Tools |
+|---|---|
+| Topic Modeling | `bertopic`, `umap-learn`, `hdbscan` |
+| NLP / Embeddings | `sentence-transformers`, `gliner`, `nltk` |
+| Data & Storage | `duckdb`, `pandas`, `swifter` |
+| Visualization | `plotly` |
+| Environment | `uv`, `pyproject.toml` |
+
+---
+
+## Project Structure
+
+```
+src/reddit_np_topics/
+├── db.py                     # DuckDB schema + read/write helpers
+├── preprocessing/
+│   ├── cleaner.py            # Raw data cleaning
+│   ├── ner.py                # GLiNER NER + toponym masking
+│   └── normalizer.py         # Text normalization
+├── modeling/
+│   ├── train_global.py       # Incremental global model training
+│   ├── train_regional.py     # Per-park model training
+│   └── utils.py              # Topic merging, coherence scoring
+└── visualization/
+    └── plots.py              # BERTopic visualization wrappers
+```
+
 ---
 
 ## Setup
 
 ```bash
-git clone https://github.com/yourusername/reddit-multiscale-topic-modeling.git
+git clone https://github.com/mad-carto/reddit-multiscale-topic-modeling.git
 cd reddit-multiscale-topic-modeling
 uv sync
 ```
@@ -34,51 +90,6 @@ notebooks/02_train_global_model.ipynb
 notebooks/03_train_regional_models.ipynb
 notebooks/04_analysis_visualization.ipynb
 ```
-
----
-# Reddit National Parks — Multiscale Topic Modeling
-
-Analyzing Reddit discussions about US National Parks using a two-level BERTopic pipeline. Topics are extracted at a **global** level (across all parks) and a **regional** level (per individual park).
-
-Location bias is mitigated by detecting place names with GLiNER and replacing them with a `TOPONYM` token before modeling. Incremental training across shuffled batches addresses data imbalance between parks.
-
----
-
-## Pipeline
-
-```
-Raw CSVs → Cleaning → NER + Toponym Masking → Text Normalization
-       → Global BERTopic Model (incremental, 5 batches)
-       → Regional BERTopic Models (per park)
-       → Analysis & Visualization
-```
-
-All intermediate data is stored in a local **DuckDB** database instead of intermediate CSVs.
-
----
-
-## Setup
-
-```bash
-git clone https://github.com/yourusername/reddit-multiscale-topic-modeling.git
-cd reddit-multiscale-topic-modeling
-uv sync
-```
-
-Place raw Reddit CSVs in `data/raw/`, then run the notebooks in order:
-
-```
-notebooks/01_preprocessing.ipynb
-notebooks/02_train_global_model.ipynb
-notebooks/03_train_regional_models.ipynb
-notebooks/04_analysis_visualization.ipynb
-```
-
----
-
-## Stack
-
-`bertopic` · `gliner` · `sentence-transformers` · `duckdb` · `umap-learn` · `hdbscan`
 
 ---
 
@@ -102,6 +113,3 @@ Zaratiana, A., Tomeh, N., Holat, P., & Charnois, T. (2023). GLiNER: Generalist m
   url    = {https://github.com/mad-carto/reddit-multiscale-topic-modeling}
 }
 ```
-## Stack
-
-`bertopic` · `gliner` · `sentence-transformers` · `duckdb` · `umap-learn` · `hdbscan`
