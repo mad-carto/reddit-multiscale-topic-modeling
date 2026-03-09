@@ -11,7 +11,6 @@ An end-to-end NLP pipeline for extracting and analyzing discussion topics from R
 - **Sentiment analysis** — applying a RoBERTa model fine-tuned on social media text to classify visitor sentiment per document
 - **Topic modeling at scale** — incremental BERTopic training across shuffled data batches to handle class imbalance across 60+ National Parks
 - **Analytical database integration** — replacing intermediate CSV files with DuckDB for efficient storage and querying of all pipeline stages
-- **Clean Python packaging** — refactored from notebooks into an installable `src`-layout package with a clear separation of concerns
 
 ---
 
