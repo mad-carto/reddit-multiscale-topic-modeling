@@ -1,0 +1,62 @@
+paths:
+  raw_data: data/raw
+  processed_data: data/processed
+  database: data/reddit_np.duckdb
+  models_global: models/global
+  models_regional: models/regional
+  outputs_visualizations: outputs/visualizations
+  outputs_results: outputs/results
+
+preprocessing:
+  ner_model: "urchade/gliner_base"
+  ner_labels: ["location"]
+  ner_threshold: 0.5
+  toponym_token: "TOPONYM"
+  stopwords_extra: ["toponym", "id", "youd", "im", "ive", "shes", "weve",
+                    "youre", "youve", "theyve", "youll", "u", "dont", "didnt"]
+
+modeling:
+  embedding_model: "all-MiniLM-L6-v2"
+
+  global:
+    n_batches: 5
+    cluster_size: 50
+    umap:
+      n_neighbors: 15
+      n_components: 5
+      min_dist: 0.0
+      metric: cosine
+      random_state: 42
+    hdbscan:
+      metric: euclidean
+      cluster_selection_method: leaf
+    vectorizer:
+      min_df: 50
+      ngram_range: [1, 2]
+    representation:
+      keybert_top_n_words: 20
+      mmr_diversity: 0.7
+    top_n_words: 10
+
+  regional:
+    cluster_size_ratio: 0.05   # fraction of park doc count; min 10
+    cluster_size_min: 10
+    umap:
+      n_neighbors: 15
+      n_components: 5
+      min_dist: 0.0
+      metric: cosine
+      random_state: 42
+    hdbscan:
+      metric: euclidean
+      cluster_selection_method: leaf
+    vectorizer:
+      max_df: 0.8
+      ngram_range: [1, 1]
+    representation:
+      keybert_top_n_words: 30
+      mmr_diversity: 0.7
+    top_n_words: 5
+    outlier_reduction:
+      strategy: probabilities
+      threshold: 0.5
